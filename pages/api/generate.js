@@ -6,22 +6,22 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-const basePromptPrefix = 
-`
-Write me an email as a politician sending to a voter about the issues about climate change.
-
-
-`;
-
 const generateAction = async (req, res) => {
+  console.log(req.body)
+  const basePromptPrefix = `
+  Write me a ${req.body.selectedOption.replace('-', ' ')} as a politician ${req.body.communication} to a voter about the ${req.body.userInput} issues below in a length of under ${req.body.wordLength} words.
+
+  signed off by Cedric Cheng, Governor of California Candidate and hoping for their vote
+
+  `;
 
   const baseCompletion = await openai.createCompletion({
     model: 'text-davinci-003',
-    prompt: `${basePromptPrefix} ${req.body.userInput}`,
+    prompt: `${basePromptPrefix}`,
     temperature: 0.99,
     max_tokens: 1250,
   });
-  
+
   const basePromptOutput = baseCompletion.data.choices.pop();
   res.status(200).json({ output: basePromptOutput });
 };

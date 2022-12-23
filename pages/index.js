@@ -1,25 +1,35 @@
 import Head from 'next/head';
-import Image from 'next/image';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import Select from 'react-select';
+import { keysFromOption } from './helpers';
+
+const options = [
+  { value: 'email', label: 'Email' },
+  { value: 'text', label: 'Text' },
+  { value: 'phone-script', label: 'Phone Script' },
+];
 
 const Home = () => {
   const [userInput, setUserInput] = useState('');
   const [apiOutput, setApiOutput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const { register, handleSubmit } = useForm();
-  const onSubmit = (data) => console.log(data);
+  const [selectedOption, setSelectedOption] = useState('email');
 
   const callGenerateEndpoint = async () => {
     setIsGenerating(true);
-
+    const optionKeys = keysFromOption(selectedOption.value);
     console.log('Calling OpenAI...');
     const response = await fetch('/api/generate', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ userInput }),
+      body: JSON.stringify({
+        userInput,
+        selectedOption: selectedOption.value,
+        wordLength: optionKeys.wordCount,
+        communication: optionKeys.communication,
+      }),
     });
 
     const data = await response.json();
@@ -53,17 +63,18 @@ const Home = () => {
           </div>
         </div>
       </div>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <select {...register('contentType')}>
-          <option value='email'>email</option>
-          <option value='text'>text</option>
-          <option value='phone-script'>phone script</option>
-        </select>
-      </form>
+      <div className='select-container'>
+        <h4 className='select-text'>Select content type</h4>
+        <Select
+          defaultValue={options[0]}
+          onChange={setSelectedOption}
+          options={options}
+        />
+      </div>
       <div className='prompt-container'>
         <textarea
           className='prompt-box'
-          placeholder='start typing here'
+          placeholder='Separate each issue with a comma'
           value={userInput}
           onChange={onUserChangedText}
         />
@@ -75,7 +86,11 @@ const Home = () => {
             onClick={callGenerateEndpoint}
           >
             <div className='generate'>
-              {isGenerating ? <span className='loader'></span> : <p>Generate</p>}
+              {isGenerating ? (
+                <span className='loader'></span>
+              ) : (
+                <p>Generate</p>
+              )}
             </div>
           </a>
         </div>
